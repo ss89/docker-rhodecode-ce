@@ -13,9 +13,9 @@ RUN . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-
 RUN mkdir -p ~/.nixpkgs && touch ~/.nixpkgs/config.nix
 RUN sed -i -e 's/^sqlalchemy.db1.url/#sqlalchemy.db1.url/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini && sed -i -e 's/#sqlalchemy.db1.url = mysql.*/sqlalchemy.db1.url = mysql:\/\/root:root@localhost\/rhodecode/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini && service mysql start && mysql -proot -e 'CREATE DATABASE rhodecode;'
 RUN mkdir /root/my_dev_repos
+COPY config.nix /root/.nixpkgs/config.nix
 RUN service mysql start && . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-enterprise-ce && nix-shell --run "paster setup-rhodecode configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes --show-trace && echo done && grunt"
 RUN locale-gen en_US.UTF-8 && echo "LANG=en_US.UTF-8" > /etc/default/locale && echo "LANG=en_US.UTF-8" >> /etc/environment
-COPY config.nix /root/.nixpkgs/config.nix
 COPY start.sh /start.sh
 RUN chmod +x start.sh
 CMD /start.sh
