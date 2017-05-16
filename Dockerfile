@@ -7,7 +7,7 @@ RUN curl https://nixos.org/nix/install | USER=root sh
 #   34  . /root/.nix-profile/etc/profile.d/nix.sh
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && nix-channel --update && nix-channel --add https://nixos.org/channels/nixos-16.03 nixpkgs && nix-channel --update
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && nix-env -i nix-prefetch-hg && nix-env -i nix-prefetch-git
-RUN mkdir rhodecode-develop && cd rhodecode-develop && hg clone https://code.rhodecode.com/rhodecode-enterprise-ce && hg clone https://code.rhodecode.com/rhodecode-vcsserver
+RUN mkdir rhodecode-develop && cd rhodecode-develop && hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.6.1 && hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.6.1
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-vcsserver && nix-shell
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-enterprise-ce && nix-shell
 RUN mkdir -p ~/.nixpkgs && touch ~/.nixpkgs/config.nix
