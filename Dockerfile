@@ -8,6 +8,7 @@ RUN curl https://nixos.org/nix/install | USER=root sh
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && nix-channel --update && nix-channel --add https://nixos.org/channels/nixos-16.03 nixpkgs && nix-channel --update
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && nix-env -i nix-prefetch-hg && nix-env -i nix-prefetch-git
 RUN mkdir rhodecode-develop && cd rhodecode-develop && hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.5.2 && hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.5.2
+RUN sed -i -e 's/0m3dx27arwmlcp00b7n516sc5a51f40p9vapr1nvd57l3i3z0pzm/1b1z3112ggjdflgrwbpmnbsh3kgcm4hn255wshvrlzds4w069gja/' /rhodecode-develop/rhodecode-enterprise-ce/pkgs/bower-packages.nix
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-vcsserver && nix-shell
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-enterprise-ce && nix-shell
 RUN mkdir -p ~/.nixpkgs && touch ~/.nixpkgs/config.nix
