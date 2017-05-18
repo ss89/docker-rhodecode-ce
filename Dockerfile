@@ -24,7 +24,7 @@ RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
 #download rhodecode enterprise and vcsserver
 RUN mkdir rhodecode-develop && \
 	cd rhodecode-develop && \
-	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.5.1 && \
+	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.6.1 && \
 	hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.6.1
 	
 #install rhodecode vcsserver
