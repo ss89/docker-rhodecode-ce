@@ -1,4 +1,4 @@
-service mysql start 
+service postgresql start 
 . /root/.nix-profile/etc/profile.d/nix.sh
 touch /var/log/rhodecode-vcsserver.log
 touch /var/log/rhodecode-enterprise-ce.log
