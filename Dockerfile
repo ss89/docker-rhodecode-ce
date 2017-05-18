@@ -27,6 +27,9 @@ RUN mkdir rhodecode-develop && \
 	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.5.1 && \
 	hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.5.1
 	
+#fix hashes for iron-ajax
+RUN sed -i -e 's/0m3dx27arwmlcp00b7n516sc5a51f40p9vapr1nvd57l3i3z0pzm/1b1z3112ggjdflgrwbpmnbsh3kgcm4hn255wshvrlzds4w069gja/' /rhodecode-develop/rhodecode-enterprise-ce/pkgs/bower-packages.nix
+
 #install rhodecode vcsserver
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-vcsserver && \
