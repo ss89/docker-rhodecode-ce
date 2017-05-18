@@ -1,22 +1,66 @@
 FROM ubuntu:17.04
-RUN echo 'mysql-server-5.6 mysql-server/root_password password root' | debconf-set-selections 
-RUN echo 'mysql-server-5.6 mysql-server/root_password_again password root' | debconf-set-selections
-RUN apt update && apt install -y curl vim bzip2 sudo libapr1-dev libaprutil1-dev libsvn-dev mysql-server libmysqlclient-dev postgresql postgresql-contrib libpq-dev libcurl4-openssl-dev mercurial
+
+#install all the necessary packages
+RUN apt update && apt install -y \
+	curl vim bzip2 sudo libapr1-dev libaprutil1-dev libsvn-dev \ 
+	postgresql postgresql-contrib libpq-dev libcurl4-openssl-dev mercurial
+
+#add nix build user and group
 RUN groupadd nixbld && useradd -g nixbld nixbld && usermod -G nixbld nixbld
+
+#download and install nix
 RUN curl https://nixos.org/nix/install | USER=root sh
-#   34  . /root/.nix-profile/etc/profile.d/nix.sh
-RUN . /root/.nix-profile/etc/profile.d/nix.sh && nix-channel --update && nix-channel --add https://nixos.org/channels/nixos-16.03 nixpkgs && nix-channel --update
-RUN . /root/.nix-profile/etc/profile.d/nix.sh && nix-env -i nix-prefetch-hg && nix-env -i nix-prefetch-git
-RUN mkdir rhodecode-develop && cd rhodecode-develop && hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.6.0 && hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.6.0
-RUN sed -i -e 's/0m3dx27arwmlcp00b7n516sc5a51f40p9vapr1nvd57l3i3z0pzm/1b1z3112ggjdflgrwbpmnbsh3kgcm4hn255wshvrlzds4w069gja/' /rhodecode-develop/rhodecode-enterprise-ce/pkgs/bower-packages.nix
-RUN . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-vcsserver && nix-shell
-RUN . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-enterprise-ce && nix-shell
+
+#update nix's package database
+RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+	nix-channel --update && \
+	nix-channel --add https://nixos.org/channels/nixos-16.03 nixpkgs && \
+	nix-channel --update
+	
+#preload nix-prefetch-*
+RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+	nix-env -i nix-prefetch-hg && \
+	nix-env -i nix-prefetch-git
+#download rhodecode enterprise and vcsserver
+RUN mkdir rhodecode-develop && \
+	cd rhodecode-develop && \
+	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.6.0 && \
+	hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.6.0
+	
+#install rhodecode vcsserver
+RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+	cd rhodecode-develop/rhodecode-vcsserver && \
+	nix-shell
+
+#install rhodecode enterprise
+RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+	cd rhodecode-develop/rhodecode-enterprise-ce && \
+	nix-shell
+
+#make sure nix has its configuration
 RUN mkdir -p ~/.nixpkgs && touch ~/.nixpkgs/config.nix
-RUN sed -i -e 's/^sqlalchemy.db1.url/#sqlalchemy.db1.url/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini && sed -i -e 's/#sqlalchemy.db1.url = mysql.*/sqlalchemy.db1.url = mysql:\/\/root:root@localhost\/rhodecode/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini && service mysql start && mysql -proot -e 'CREATE DATABASE rhodecode;'
+	
+#enable connections from all hosts for rhodecode enterprise (not vcsserver)
+RUN sed -i -e 's/host = .*/host = 0.0.0.0/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
+
+#create repositories directory
 RUN mkdir /root/my_dev_repos
+
+#copy nix's configuration
 COPY config.nix /root/.nixpkgs/config.nix
-RUN service mysql start && . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop/rhodecode-enterprise-ce && nix-shell --run "paster setup-rhodecode configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes && echo done && grunt"
+
+#setup rhodecode enterprise to use postgres, create the database and let grunt do its tasks
+RUN sed -i -e 's/postgres:qweqwe/postgres:postgres/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
+RUN service postgresql start && \
+	sudo -u postgres -H psql -c "ALTER USER postgres PASSWORD 'postgres';" && \
+	sudo -u postgres -H psql -c "CREATE DATABASE rhodecode" && \
+	. /root/.nix-profile/etc/profile.d/nix.sh && \
+	cd rhodecode-develop/rhodecode-enterprise-ce && \
+	nix-shell --run "paster setup-rhodecode configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes && grunt"
+	
+#generate the necessary locale to start the vcsserver/rhodecode enterprise
 RUN locale-gen en_US.UTF-8 && echo "LANG=en_US.UTF-8" > /etc/default/locale && echo "LANG=en_US.UTF-8" >> /etc/environment
+
 COPY start.sh /start.sh
 RUN chmod +x start.sh
 VOLUME /rhodecode-develop/rhodecode-enterprise-ce/configs /var/lib/mysql /root/my_dev_repos
