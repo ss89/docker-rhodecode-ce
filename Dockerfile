@@ -71,6 +71,6 @@ RUN locale-gen en_US.UTF-8 && echo "LANG=en_US.UTF-8" > /etc/default/locale && e
 
 COPY start.sh /start.sh
 RUN chmod +x start.sh
-VOLUME /rhodecode-develop/rhodecode-enterprise-ce/configs /var/lib/mysql /root/my_dev_repos
+VOLUME /rhodecode-develop/rhodecode-enterprise-ce/configs /var/lib/postgresql /root/my_dev_repos
 EXPOSE 5000
 CMD /start.sh
