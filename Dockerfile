@@ -39,6 +39,11 @@ RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-enterprise-ce && \
 	nix-shell
+	
+#install missing gunicorn for vcsserver
+RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+	cd rhodecode-develop/rhodecode-vcsserver && \
+	nix-shell --run "pip install gunicorn"
 
 #make sure nix has its configuration
 RUN mkdir -p ~/.nixpkgs && touch ~/.nixpkgs/config.nix
