@@ -52,8 +52,9 @@ RUN mkdir /root/my_dev_repos
 #copy nix's configuration
 COPY config.nix /root/.nixpkgs/config.nix
 
-#setup rhodecode enterprise to use postgres, create the database and let grunt do its tasks
+#setup rhodecode enterprise to use postgres, use only one worker because of a race condition currently occuring, create the database and let grunt do its tasks
 RUN sed -i -e 's/postgres:qweqwe/postgres:postgres/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
+RUN sed -i -e 's/workers = 2/workers = 1/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
 RUN service postgresql start && \
 	sudo -u postgres -H psql -c "ALTER USER postgres PASSWORD 'postgres';" && \
 	sudo -u postgres -H psql -c "CREATE DATABASE rhodecode" && \
