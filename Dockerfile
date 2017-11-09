@@ -24,8 +24,11 @@ RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
 #download rhodecode enterprise and vcsserver
 RUN mkdir rhodecode-develop && \
 	cd rhodecode-develop && \
-	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce && \
-	hg clone https://code.rhodecode.com/rhodecode-vcsserver
+	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.0.0 && \
+	hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.0.0
+
+#fix hashes for iron-ajax
+RUN sed -i -e 's/1b1z3112ggjdflgrwbpmnbsh3kgcm4hn255wshvrlzds4w069gja/0m3dx27arwmlcp00b7n516sc5a51f40p9vapr1nvd57l3i3z0pzm/' /rhodecode-develop/rhodecode-enterprise-ce/pkgs/bower-packages.nix
 	
 #install rhodecode vcsserver
 RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
@@ -49,8 +52,9 @@ RUN mkdir /root/my_dev_repos
 #copy nix's configuration
 COPY config.nix /root/.nixpkgs/config.nix
 
-#setup rhodecode enterprise to use postgres, create the database and let grunt do its tasks
+#setup rhodecode enterprise to use postgres, use only one worker because of a race condition currently occuring, create the database and let grunt do its tasks
 RUN sed -i -e 's/postgres:qweqwe/postgres:postgres/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
+RUN sed -i -e 's/workers = 2/workers = 1/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
 RUN service postgresql start && \
 	sudo -u postgres -H psql -c "ALTER USER postgres PASSWORD 'postgres';" && \
 	sudo -u postgres -H psql -c "CREATE DATABASE rhodecode" && \
