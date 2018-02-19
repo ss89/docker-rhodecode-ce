@@ -1,4 +1,4 @@
-FROM ubuntu:17.04
+FROM ubuntu:17.10
 
 #install all the necessary packages
 RUN apt update && apt install -y \
