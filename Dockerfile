@@ -12,13 +12,13 @@ RUN groupadd nixbld && useradd -g nixbld nixbld && usermod -G nixbld nixbld
 RUN curl https://nixos.org/nix/install | USER=root sh
 
 #update nix's package database
-RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	nix-channel --update && \
 	nix-channel --add https://nixos.org/channels/nixos-16.03 nixpkgs && \
 	nix-channel --update
 	
 #preload nix-prefetch-*
-RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	nix-env -i nix-prefetch-hg && \
 	nix-env -i nix-prefetch-git
 #download rhodecode enterprise and vcsserver
@@ -28,12 +28,12 @@ RUN mkdir rhodecode-develop && \
 	hg clone https://code.rhodecode.com/rhodecode-vcsserver
 	
 #install rhodecode vcsserver
-RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-vcsserver && \
 	nix-shell
 
 #install rhodecode enterprise
-RUN . /root/.nix-profile/etc/profile.d/nix.sh && \
+RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-enterprise-ce && \
 	nix-shell
 
@@ -49,14 +49,16 @@ RUN mkdir /root/my_dev_repos
 #copy nix's configuration
 COPY config.nix /root/.nixpkgs/config.nix
 
-#setup rhodecode enterprise to use postgres, create the database and let grunt do its tasks
+#setup rhodecode enterprise to use postgres, use only one worker because of a race condition currently occuring, create the database and let grunt do its tasks
+RUN sed -i -e 's/workers = 2/workers = 1/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
+RUN echo UTC > /etc/timezone
 RUN sed -i -e 's/postgres:qweqwe/postgres:postgres/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
 RUN service postgresql start && \
 	sudo -u postgres -H psql -c "ALTER USER postgres PASSWORD 'postgres';" && \
 	sudo -u postgres -H psql -c "CREATE DATABASE rhodecode" && \
-	. /root/.nix-profile/etc/profile.d/nix.sh && \
+	USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-enterprise-ce && \
-	nix-shell --run "paster setup-rhodecode configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes && grunt"
+	nix-shell --run "rc-setup-app configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes && grunt"
 	
 #generate the necessary locale to start the vcsserver/rhodecode enterprise
 RUN locale-gen en_US.UTF-8 && echo "LANG=en_US.UTF-8" > /etc/default/locale && echo "LANG=en_US.UTF-8" >> /etc/environment
