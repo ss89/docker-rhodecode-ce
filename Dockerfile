@@ -1,4 +1,4 @@
-FROM ubuntu:17.10
+FROM ubuntu:18.04
 
 #install all the necessary packages
 RUN apt update && apt install -y \
@@ -55,6 +55,8 @@ COPY config.nix /root/.nixpkgs/config.nix
 #setup rhodecode enterprise to use postgres, use only one worker because of a race condition currently occuring, create the database and let grunt do its tasks
 RUN sed -i -e 's/postgres:qweqwe/postgres:postgres/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
 RUN sed -i -e 's/workers = 2/workers = 1/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
+RUN echo UTC > /etc/timezone
+
 RUN service postgresql start && \
 	sudo -u postgres -H psql -c "ALTER USER postgres PASSWORD 'postgres';" && \
 	sudo -u postgres -H psql -c "CREATE DATABASE rhodecode" && \
