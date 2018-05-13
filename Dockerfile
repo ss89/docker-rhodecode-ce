@@ -55,7 +55,7 @@ COPY config.nix /root/.nixpkgs/config.nix
 #setup rhodecode enterprise to use postgres, use only one worker because of a race condition currently occuring, create the database and let grunt do its tasks
 RUN sed -i -e 's/postgres:qweqwe/postgres:postgres/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
 RUN sed -i -e 's/workers = 2/workers = 1/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
-RUN echo UTC > /etc/timezone
+RUN rm /etc/timezone
 
 RUN service postgresql start && \
 	sudo -u postgres -H psql -c "ALTER USER postgres PASSWORD 'postgres';" && \
@@ -65,7 +65,7 @@ RUN service postgresql start && \
 	nix-shell --run "rc-setup-app configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes && grunt"
 	
 #generate the necessary locale to start the vcsserver/rhodecode enterprise
-RUN locale-gen en_US.UTF-8 && echo "LANG=en_US.UTF-8" > /etc/default/locale && echo "LANG=en_US.UTF-8" >> /etc/environment
+RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && nix-env -i glibc-locales && export LOCALE_ARCHIVE=`nix-env --installed --no-name --out-path --query glibc-locales`/lib/locale/locale-archive
 
 COPY start.sh /start.sh
 RUN chmod +x start.sh
