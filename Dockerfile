@@ -21,12 +21,13 @@ RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	nix-env -i nix-prefetch-hg && \
 	nix-env -i nix-prefetch-git
+
 #download rhodecode enterprise and vcsserver
 RUN mkdir rhodecode-develop && \
 	cd rhodecode-develop && \
-	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce && \
-	hg clone https://code.rhodecode.com/rhodecode-vcsserver
-	
+	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.12.2 && \
+	hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.12.2
+
 #install rhodecode vcsserver
 RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-vcsserver && \
@@ -50,9 +51,10 @@ RUN mkdir /root/my_dev_repos
 COPY config.nix /root/.nixpkgs/config.nix
 
 #setup rhodecode enterprise to use postgres, use only one worker because of a race condition currently occuring, create the database and let grunt do its tasks
+RUN sed -i -e 's/postgres:qweqwe/postgres:postgres/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
 RUN sed -i -e 's/workers = 2/workers = 1/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
 RUN rm /etc/timezone
-RUN sed -i -e 's/postgres:qweqwe/postgres:postgres/' /rhodecode-develop/rhodecode-enterprise-ce/configs/production.ini
+
 RUN service postgresql start && \
 	sudo -u postgres -H psql -c "ALTER USER postgres PASSWORD 'postgres';" && \
 	sudo -u postgres -H psql -c "CREATE DATABASE rhodecode" && \
