@@ -37,6 +37,10 @@ RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-enterprise-ce && \
 	nix-shell
 
+#install rhodecode tools
+RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop && hg clone https://code.rhodecode.com/rhodecode-tools-ce -u v0.15.0 && cd rhodecode-tools-ce && nix-shell
+ADD .rhoderc /root/.rhoderc
+
 #make sure nix has its configuration
 RUN mkdir -p ~/.nixpkgs && touch ~/.nixpkgs/config.nix
 	
@@ -58,13 +62,16 @@ RUN service postgresql start && \
 	sudo -u postgres -H psql -c "CREATE DATABASE rhodecode" && \
 	USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-enterprise-ce && \
-	nix-shell --run "rc-setup-app configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes && grunt"
-	
+	nix-shell --run "rc-setup-app configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes --api-key DOCKER_API_KEY &&	grunt" && \
+	export RHODECODE_API_KEY=`sudo -u postgres -H psql rhodecode -c "select api_key FROM user_api_keys where user_id=2 and role='token_role_all';" -A -t` && \
+        sed -ie "s/api_key = .*/api_key = $RHODECODE_API_KEY/" /root/.rhoderc
+
 #generate the necessary locale to start the vcsserver/rhodecode enterprise
 RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && nix-env -i glibc-locales && export LOCALE_ARCHIVE=`nix-env --installed --no-name --out-path --query glibc-locales`/lib/locale/locale-archive
 
 COPY start.sh /start.sh
-RUN chmod +x start.sh
+COPY rhodecode /bin/rhodecode
+RUN chmod +x start.sh /bin/rhodecode
 VOLUME /rhodecode-develop/rhodecode-enterprise-ce/configs /var/lib/postgresql /root/my_dev_repos
 EXPOSE 5000
 CMD /start.sh

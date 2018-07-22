@@ -1,0 +1,8 @@
+#!/bin/bash
+export USER=root
+. /root/.nix-profile/etc/profile.d/nix.sh
+cd /rhodecode-develop/rhodecode-tools-ce
+export LOCALE_ARCHIVE=`nix-env --installed --no-name --out-path --query glibc-locales`/lib/locale/locale-archive
+CMD="nix-shell -Q --run \"rhodecode-$@\""
+echo running $CMD
+bash -c "$CMD"
