@@ -47,6 +47,10 @@ RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-enterprise-ce && \
 	nix-shell
 
+#install rhodecode tools
+RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop && hg clone https://code.rhodecode.com/rhodecode-tools-ce -u v0.15.0 && cd rhodecode-tools-ce && nix-shell
+ADD .rhoderc /root/.rhoderc
+
 #make sure nix has its configuration
 RUN mkdir -p ~/.nixpkgs && touch ~/.nixpkgs/config.nix
 	
@@ -79,6 +83,7 @@ RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && nix-env -i glibc-loca
 
 COPY rhodecode /bin/rhodecode
 COPY start.sh /start.sh
+COPY rhodecode /bin/rhodecode
 RUN chmod +x start.sh /bin/rhodecode
 VOLUME /rhodecode-develop/rhodecode-enterprise-ce/configs /var/lib/postgresql /root/my_dev_repos
 EXPOSE 5000
