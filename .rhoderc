@@ -1,0 +1,4 @@
+[instance:enterprise-1]
+api_host = http://127.0.0.1:5000
+api_key = DOCKER_API_KEY
+repo_dir = /root/my_dev_repos
