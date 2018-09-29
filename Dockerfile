@@ -14,7 +14,7 @@ RUN curl https://nixos.org/nix/install | USER=root sh
 #update nix's package database
 RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	nix-channel --update && \
-	nix-channel --add https://nixos.org/channels/nixos-16.03 nixpkgs && \
+	nix-channel --add https://nixos.org/channels/nixos-18.03 nixpkgs && \
 	nix-channel --update
 	
 #preload nix-prefetch-*
