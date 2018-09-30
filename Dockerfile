@@ -48,7 +48,6 @@ RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	nix-shell
 
 #install rhodecode tools
-RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && cd rhodecode-develop && hg clone https://code.rhodecode.com/rhodecode-tools-ce -u v0.15.0 && cd rhodecode-tools-ce && nix-shell
 ADD .rhoderc /root/.rhoderc
 
 #make sure nix has its configuration
