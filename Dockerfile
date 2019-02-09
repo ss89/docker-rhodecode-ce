@@ -8,8 +8,29 @@ RUN apt update && apt install -y \
 #add nix build user and group
 RUN groupadd nixbld && useradd -g nixbld nixbld && usermod -G nixbld nixbld
 
+#disable nix sandboxing
+RUN mkdir /etc/nix && echo 'sandbox = false' > /etc/nix/nix.conf
+
 #download and install nix
 RUN curl https://nixos.org/nix/install | USER=root sh
+
+#ensure profile is set up right
+RUN ln -s /nix/var/nix/profiles/default/etc/profile.d/nix.sh /etc/profile.d/
+
+#set build variables
+ONBUILD ENV \
+    ENV=/etc/profile \
+    USER=root \
+    PATH=/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/bin:/sbin:/usr/bin:/usr/sbin \
+    GIT_SSL_CAINFO=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt \
+    NIX_SSL_CERT_FILE=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt
+ENV \
+    ENV=/etc/profile \
+    USER=root \
+    PATH=/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/bin:/sbin:/usr/bin:/usr/sbin \
+    GIT_SSL_CAINFO=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt \
+    NIX_SSL_CERT_FILE=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt \
+    NIX_PATH=/nix/var/nix/profiles/per-user/root/channels
 
 #update nix's package database
 RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
@@ -70,7 +91,7 @@ RUN service postgresql start && \
 	sudo -u postgres -H psql -c "CREATE DATABASE rhodecode" && \
 	USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 	cd rhodecode-develop/rhodecode-enterprise-ce && \
-        nix-shell --run "rc-setup-app configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes --api-key DOCKER_API_KEY && grunt" && \
+        nix-shell --run "rc-setup-app configs/production.ini --user=admin --password=secret --email=admin@example.com --repos=/root/my_dev_repos --force-yes --api-key DOCKER_API_KEY && apt install -y grunt && grunt && apt remove -y grunt && apt autoremove -y" && \
         export RHODECODE_API_KEY=`sudo -u postgres -H psql rhodecode -c "select api_key FROM user_api_keys where user_id=2 and role='token_role_all';" -A -t` && \
         sed -ie "s/api_key = .*/api_key = $RHODECODE_API_KEY/" /root/.rhoderc
 
