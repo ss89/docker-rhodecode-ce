@@ -18,3 +18,7 @@ armhf will not always be up-to-date, as this is a private project of someone not
 ##### Exposed Ports to be used:
 - 5000
 -- for accessing your RhodeCode instance
+
+##### Default Credentials:
+- Username: admin
+- Password: secret
