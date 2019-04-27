@@ -1,6 +1,5 @@
 ## RhodeCode Enterprise Community Edition Docker Container
 
-
 This repository aims to host the Dockerfile and some additional files used to build a Docker Container for RhodeCode.
 
 Pre-Built Containers (x86_64) can be found [here](https://hub.docker.com/r/sstruss/rhodecode-ce/tags/)
