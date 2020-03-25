@@ -46,8 +46,8 @@ RUN USER=root . /root/.nix-profile/etc/profile.d/nix.sh && \
 #download rhodecode enterprise and vcsserver
 RUN mkdir rhodecode-develop && \
 	cd rhodecode-develop && \
-	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce && \
-	hg clone https://code.rhodecode.com/rhodecode-vcsserver && \
+	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.18.3 && \
+	hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.18.3 && \
 	hg clone https://code.rhodecode.com/rhodecode-tools-ce -u v1.1.0
 
 #fix subversion archive
