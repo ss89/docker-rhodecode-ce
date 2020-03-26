@@ -48,7 +48,7 @@ RUN mkdir rhodecode-develop && \
 	cd rhodecode-develop && \
 	hg clone https://code.rhodecode.com/rhodecode-enterprise-ce -u v4.18.1 && \
 	hg clone https://code.rhodecode.com/rhodecode-vcsserver -u v4.18.1 && \
-	hg clone https://code.rhodecode.com/rhodecode-tools-ce -u v1.1.0
+	hg clone https://code.rhodecode.com/rhodecode-tools-ce -u v1.4.0
 
 #fix subversion archive
 RUN cd rhodecode-develop/rhodecode-vcsserver && sed -ie 's/www.apache.org/archive.apache.org/' default.nix
