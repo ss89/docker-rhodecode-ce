@@ -12,7 +12,7 @@ RUN groupadd nixbld && useradd -g nixbld nixbld && usermod -G nixbld nixbld
 RUN mkdir /etc/nix && echo 'sandbox = false' > /etc/nix/nix.conf
 
 #download and install nix
-RUN curl https://nixos.org/nix/install | USER=root sh
+RUN curl -L https://nixos.org/nix/install | USER=root sh
 
 #ensure profile is set up right
 RUN ln -s /nix/var/nix/profiles/default/etc/profile.d/nix.sh /etc/profile.d/
